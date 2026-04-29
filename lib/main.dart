@@ -1,122 +1,269 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Importación necesaria
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'LALA CRUD Admin',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        primarySwatch: Colors.red,
+        useMaterial3: false, // Usamos v2 para mantener el estilo clásico de los botones
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const LoginPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+// --- PANTALLA DE LOGIN REAL ---
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _LoginPageState extends State<LoginPage> {
+  final _emailController = TextEditingController();
+  final _passController = TextEditingController();
+  bool _isLoading = false;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  // Función para autenticar con Firebase
+  Future<void> _login() async {
+    setState(() => _isLoading = true);
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passController.text.trim(),
+      );
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ProductsPage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String mensaje = "Error de autenticación";
+      if (e.code == 'user-not-found') mensaje = "El usuario no existe";
+      if (e.code == 'wrong-password') mensaje = "Contraseña incorrecta";
+      if (e.code == 'invalid-email') mensaje = "Formato de correo no válido";
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensaje), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      backgroundColor: Colors.white,
+      appBar: AppBar(title: const Text("LALA - Acceso Administrativo"), backgroundColor: Colors.red),
+      body: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const Icon(Icons.delivery_dining, size: 100, color: Colors.red),
+                const SizedBox(height: 20),
+                const Text("Panel de Control", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 30),
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: "Correo Electrónico", border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: _passController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: "Contraseña", border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading 
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("INICIAR SESIÓN", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+// --- PANTALLA CRUD ---
+class ProductsPage extends StatefulWidget {
+  const ProductsPage({super.key});
+
+  @override
+  State<ProductsPage> createState() => _ProductsPageState();
+}
+
+class _ProductsPageState extends State<ProductsPage> {
+  final CollectionReference productos = FirebaseFirestore.instance.collection('productos');
+
+  void _confirmarEliminar(String id) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Confirmar"),
+          content: const Text("¿Estás seguro de que quieres eliminar este producto?"),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
+            TextButton(
+              onPressed: () async {
+                await productos.doc(id).delete();
+                Navigator.pop(context);
+              }, 
+              child: const Text("ELIMINAR", style: TextStyle(color: Colors.red))
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showForm([DocumentSnapshot? doc]) {
+    final nameCtrl = TextEditingController(text: doc != null ? doc['nombre'] : '');
+    final priceCtrl = TextEditingController(text: doc != null ? doc['precio'].toString() : '');
+    final stockCtrl = TextEditingController(text: doc != null ? doc['stock'].toString() : '');
+    bool esLacteo = doc != null ? (doc['tipo'] == 'Lácteo') : true;
+
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            top: 20, left: 20, right: 20, 
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(doc == null ? "Nuevo Producto LALA" : "Editar Producto", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: "Nombre")),
+              TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: "Precio"), keyboardType: TextInputType.number),
+              TextField(controller: stockCtrl, decoration: const InputDecoration(labelText: "Stock"), keyboardType: TextInputType.number),
+              const SizedBox(height: 10),
+              const Text("Tipo de Producto:"),
+              Row(
+                children: [
+                  Radio(value: true, groupValue: esLacteo, onChanged: (val) => setModalState(() => esLacteo = val as bool)),
+                  const Text("Lácteo"),
+                  Radio(value: false, groupValue: esLacteo, onChanged: (val) => setModalState(() => esLacteo = val as bool)),
+                  const Text("No Lácteo"),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () async {
+                  Map<String, dynamic> data = {
+                    'nombre': nameCtrl.text,
+                    'precio': priceCtrl.text,
+                    'stock': stockCtrl.text,
+                    'tipo': esLacteo ? 'Lácteo' : 'No Lácteo',
+                  };
+
+                  if (doc == null) {
+                    await productos.add(data);
+                  } else {
+                    await productos.doc(doc.id).update(data);
+                  }
+                  Navigator.pop(context);
+                },
+                child: Text(doc == null ? "Guardar en Firebase" : "Actualizar", style: const TextStyle(color: Colors.white)),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Inventario LALA"),
+        backgroundColor: Colors.red,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout), 
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (mounted) {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+              }
+            }
+          )
+        ],
+      ),
+      body: StreamBuilder(
+        stream: productos.snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          
+          return ListView.builder(
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              final doc = snapshot.data!.docs[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: ListTile(
+                  leading: Icon(
+                    doc['tipo'] == 'Lácteo' ? Icons.local_drink : Icons.local_drink, 
+                    color: Colors.red[300]
+                  ),
+                  title: Text(doc['nombre'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text("Precio: \$${doc['precio']} | Stock: ${doc['stock']} \nTipo: ${doc['tipo']}"),
+                  isThreeLine: true,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(icon: const Icon(Icons.edit, color: Colors.blue), onPressed: () => showForm(doc)),
+                      IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmarEliminar(doc.id)),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        backgroundColor: Colors.red,
+        onPressed: () => showForm(),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 }

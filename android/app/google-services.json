@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "73943460493",
+    "project_id": "lalacrud-5b5f6",
+    "storage_bucket": "lalacrud-5b5f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:73943460493:android:18bef7ee7992b20aa850c4",
+        "android_client_info": {
+          "package_name": "com.example.myapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGvoCV4tkH9IeJGR2xWu5WYhJbA6a2QbQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
